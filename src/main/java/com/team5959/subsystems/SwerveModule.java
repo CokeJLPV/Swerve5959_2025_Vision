@@ -1,7 +1,7 @@
 package com.team5959.subsystems;
 import com.revrobotics.spark.SparkMax; // Clase para controlar motores SparkMax
-import com.revrobotics.spark.SparkBase.PersistMode; // Modo de persistencia de configuración
-import com.revrobotics.spark.SparkBase.ResetMode; // Modo de reinicio de configuración
+import com.revrobotics.PersistMode; // Modo de persistencia de configuración
+import com.revrobotics.ResetMode; // Modo de reinicio de configuración
 import com.revrobotics.spark.config.SparkMaxConfig; // Configuración para SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode; // Modos de inactividad del motor
 import com.revrobotics.spark.SparkLowLevel.MotorType; // Tipos de motor (Brushless o Brushed)

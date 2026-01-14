@@ -3,7 +3,6 @@ package com.team5959;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -27,7 +26,6 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /** Add your docs here. */
@@ -39,14 +37,6 @@ public class Vision {
     private final PhotonPoseEstimator leftPoseEstimator;
     private final PhotonPoseEstimator rightPoseEstimator;
     private AprilTagFieldLayout aprilTagFieldLayout;
-
-    // --- MULTITHREADING (HILOS) ---
-    // El Notifier ejecuta código en un hilo separado del Main Loop
-    private final Notifier visionThread;
-
-    // AtomicReference permite pasar datos entre el hilo de visión y el hilo del robot sin choques
-    private final AtomicReference<List<EstimatedRobotPose>> latestEstimates = new AtomicReference<>(new ArrayList<>());
-    private final AtomicReference<Pose2d> robotPoseReference = new AtomicReference<>(new Pose2d());
 
     // --- VARIABLES DE SIMULACIÓN ---
     private VisionSystemSim visionSim;
@@ -63,8 +53,6 @@ public class Vision {
     private static final double FIELD_WIDTH_METERS = 8.21;
     // Límite de altura: El robot no debería reportar estar volando a más de 50cm
     private static final double MAX_HEIGHT_ERROR_METERS = 0.5;
-    //Limte de ambiguedad: Si la ambiguedad es mayor a este valor, ignorar la lectura
-    private static final double MAX_AMBIGUITY_ALLOWED = 0.2; // Filtro de BroncBotz
 
     private static final Transform3d LEFT_FRONT_ROBOT_TO_CAM = new Transform3d(
             new Translation3d(0.3, 0.3, 0.2),
@@ -81,7 +69,7 @@ public class Vision {
 
         try {
             // Usamos 2024 Crescendo ya que tu librería aún no tiene 2025
-            aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+            aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
         } catch (Exception e) {
             e.printStackTrace();
             // Inicializar un layout vacío para evitar NullPointerException si falla la carga
@@ -109,93 +97,39 @@ public class Vision {
         // --- INICIALIZACIÓN DE SIMULACIÓN ---
         // Esto solo se ejecuta si estamos simulando en la PC
         if (RobotBase.isSimulation()) {
+            // 1. Crear el sistema de visión simulado
+            visionSim = new VisionSystemSim("main");
+            
+            // 2. Agregar los AprilTags del campo al simulador
+            visionSim.addAprilTags(aprilTagFieldLayout);
 
-            setupSimulation();
+            // 3. Definir propiedades de la cámara simulada (OV9281 aprox)
+            SimCameraProperties cameraProps = new SimCameraProperties();
+            cameraProps.setCalibration(640, 480, Rotation2d.fromDegrees(70)); // FOV aprox 70 grados
+            cameraProps.setCalibError(0.25, 0.10); // Simular ruido/error
+            cameraProps.setFPS(30);
+            cameraProps.setAvgLatencyMs(30);
+            cameraProps.setLatencyStdDevMs(5);
+
+            // 4. Crear los simuladores de cámara vinculados a las cámaras reales
+            leftCameraSim = new PhotonCameraSim(leftFrontCamera, cameraProps);
+            rightCameraSim = new PhotonCameraSim(rightFrontCamera, cameraProps);
+
+            // 5. Agregarlas al mundo simulado con su posición respecto al robot
+            visionSim.addCamera(leftCameraSim, LEFT_FRONT_ROBOT_TO_CAM);
+            visionSim.addCamera(rightCameraSim, RIGHT_FRONT_ROBOT_TO_CAM);
+            
+            // Habilitar visualización de wireframes para ver los tags en el stream
+            leftCameraSim.enableDrawWireframe(true);
+            rightCameraSim.enableDrawWireframe(true);
         }
-
-        // --- INICIAR HILO DE VISIÓN ---
-        // Este hilo correrá la función 'updateVision' cada 0.02 segundos (50Hz)
-        // de forma independiente al resto del robot.
-        visionThread = new Notifier(this::updateVision);
-        visionThread.startPeriodic(0.02);
-    }
-
-    /**
-     * Este método corre en un HILO SECUNDARIO.
-     * Aquí hacemos todo el trabajo pesado de matemáticas y filtrado.
-     */
-    private void updateVision() {
-        if (aprilTagFieldLayout == null) return;
-
-        // Leer la última posición conocida del robot (seed) de forma segura
-        Pose2d referencePose = robotPoseReference.get();
-        leftPoseEstimator.setReferencePose(referencePose);
-        rightPoseEstimator.setReferencePose(referencePose);
-
-        List<EstimatedRobotPose> newEstimates = new ArrayList<>();
-
-        // Procesar y Filtrar Cámara Izquierda
-        for (PhotonPipelineResult change : leftFrontCamera.getAllUnreadResults()) {
-            if (shouldProcess(change)) { // Aplicar filtro de ambigüedad
-                Optional<EstimatedRobotPose> est = leftPoseEstimator.update(change);
-                if (est.isPresent() && isPoseValid(est.get().estimatedPose)) {
-                    newEstimates.add(est.get());
-                }
-            }
-        }
-
-        // Procesar y Filtrar Cámara Derecha
-        for (PhotonPipelineResult change : rightFrontCamera.getAllUnreadResults()) {
-            if (shouldProcess(change)) { // Aplicar filtro de ambigüedad
-                Optional<EstimatedRobotPose> est = rightPoseEstimator.update(change);
-                if (est.isPresent() && isPoseValid(est.get().estimatedPose)) {
-                    newEstimates.add(est.get());
-                }
-            }
-        }
-
-        // Publicar los resultados limpios para que el Main Thread los recoja
-        latestEstimates.set(newEstimates);
-    }
-
-    /**
-     * FILTRO ÉLITE: Ambigüedad
-     * Determina si vale la pena procesar este frame.
-     */
-    private boolean shouldProcess(PhotonPipelineResult result) {
-        if (!result.hasTargets()) return false;
-
-        // Si hay múltiples tags, siempre procesamos (SolvePNP es muy robusto con multi-tag)
-        if (result.getTargets().size() > 1) return true;
-
-        // Si hay solo 1 tag, verificamos que no sea ambiguo
-        if (result.getTargets().size() == 1) {
-            double ambiguity = result.getBestTarget().getPoseAmbiguity();
-            // Si la ambigüedad es alta (>0.2), rechazamos el frame.
-            if (ambiguity > MAX_AMBIGUITY_ALLOWED) return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Método llamado por el Main Thread (SwerveChassis) para obtener los datos ya procesados.
-     * @param currentRobotPose La posición actual del odómetro para "sembrar" el siguiente ciclo.
-     */
-    public List<EstimatedRobotPose> getLatestEstimates(Pose2d currentRobotPose) {
-        // Actualizamos la referencia para que el hilo de visión la use en su siguiente ciclo
-        robotPoseReference.set(currentRobotPose);
-        
-        // Devolvemos y limpiamos la lista de estimaciones
-        return latestEstimates.getAndSet(new ArrayList<>());
     }
 
     /**
      * Obtiene las estimaciones de pose de todas las cámaras de AprilTags visibles.
      * @return Lista de estimaciones para inyectar en el SwerveDrivePoseEstimator.
      */
-    /* FIXME Eliminado para usar Hilo
-     public List<EstimatedRobotPose> getEstimatedGlobalPoses(Pose2d prevEstimatedRobotPose) {
+    public List<EstimatedRobotPose> getEstimatedGlobalPoses(Pose2d prevEstimatedRobotPose) {
         List<EstimatedRobotPose> estimates = new ArrayList<>();
         if (aprilTagFieldLayout == null) return estimates; // Seguridad por si falla carga del mapa
 
@@ -225,7 +159,6 @@ public class Vision {
         }
         return estimates;
     }
-    */
 
     /**
      * Filtro de Sanidad: Verifica que la pose sea físicamente posible.
@@ -274,9 +207,9 @@ public class Vision {
             estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         } else {
             // Escalamos la confianza basada en la distancia.
-            // Factor: 1 + (distancia^2 / 20). Curva suave.
-            // Ejemplo: a 3m -> 1 + (9/20) = 1.45x de error.
-            estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 20));
+            // Factor: 1 + (distancia^2 / 30). Curva suave.
+            // Ejemplo: a 3m -> 1 + (9/30) = 1.3x de error.
+            estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
         }
         
         return estStdDevs;
@@ -299,33 +232,5 @@ public class Vision {
         if (visionSim != null) {
             visionSim.update(robotSimPose);
         }
-    }
-
-    private void setupSimulation(){
-        // 1. Crear el sistema de visión simulado
-        visionSim = new VisionSystemSim("main");
-        
-        // 2. Agregar los AprilTags del campo al simulador
-        visionSim.addAprilTags(aprilTagFieldLayout);
-
-        // 3. Definir propiedades de la cámara simulada (OV9281 aprox)
-        SimCameraProperties cameraProps = new SimCameraProperties();
-        cameraProps.setCalibration(640, 480, Rotation2d.fromDegrees(70)); // FOV aprox 70 grados
-        cameraProps.setCalibError(0.25, 0.10); // Simular ruido/error
-        cameraProps.setFPS(30);
-        cameraProps.setAvgLatencyMs(30);
-        cameraProps.setLatencyStdDevMs(5);
-
-        // 4. Crear los simuladores de cámara vinculados a las cámaras reales
-        leftCameraSim = new PhotonCameraSim(leftFrontCamera, cameraProps);
-        rightCameraSim = new PhotonCameraSim(rightFrontCamera, cameraProps);
-
-        // 5. Agregarlas al mundo simulado con su posición respecto al robot
-        visionSim.addCamera(leftCameraSim, LEFT_FRONT_ROBOT_TO_CAM);
-        visionSim.addCamera(rightCameraSim, RIGHT_FRONT_ROBOT_TO_CAM);
-            
-        // Habilitar visualización de wireframes para ver los tags en el stream
-        leftCameraSim.enableDrawWireframe(true);
-        rightCameraSim.enableDrawWireframe(true);
     }
 }

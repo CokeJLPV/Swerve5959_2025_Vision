@@ -334,7 +334,7 @@ public void publishTrajectory(String name, Trajectory trajectory) {
       return; 
     }
 
-    List<EstimatedRobotPose> visionEstimates = vision.getLatestEstimates(poseEstimator.getEstimatedPosition());
+    List<EstimatedRobotPose> visionEstimates = vision.getEstimatedGlobalPoses(poseEstimator.getEstimatedPosition());
 
     for (EstimatedRobotPose estimate : visionEstimates){
       //Calculamos la confianza dinámica antes de agregar la medición
@@ -387,7 +387,7 @@ return num;
 }
 /**
  * Este método corre automáticamente solo cuando estás simulando el robot.
- */
+
 @Override
 public void simulationPeriodic() {
     // Le decimos a PhotonVision dónde está el robot simulado en el campo.
@@ -397,5 +397,5 @@ public void simulationPeriodic() {
     // Por ahora, usar la odometría es suficiente para pruebas básicas.
     vision.simulationPeriodic(poseEstimator.getEstimatedPosition());
 }
-
+*/
 }

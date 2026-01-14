@@ -4,14 +4,16 @@
 
 package com.team5959.subsystems;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.team5959.Constants.intakeCoralConstants;
+
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class intakeCoralSubsystem extends SubsystemBase {
 
@@ -38,8 +40,9 @@ public class intakeCoralSubsystem extends SubsystemBase {
     coralIntakeMotorLeftConfig.follow(coralIntakeMotorRight, intakeCoralConstants.coralIntakeMotorLeftInverted);
     coralIntakeMotorRightConfig.inverted(intakeCoralConstants.coralIntakeMotorRightInverted);
 
-    coralIntakeMotorRight.configure(coralIntakeMotorRightConfig, null, null);
-    coralIntakeMotorLeft.configure(coralIntakeMotorLeftConfig, null, null);
+    //coralIntakeMotorRight.configure(coralIntakeMotorRightConfig, null, null);
+    coralIntakeMotorRight.configure(coralIntakeMotorLeftConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    coralIntakeMotorLeft.configure(coralIntakeMotorLeftConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   public void runInCoralIntake() {
