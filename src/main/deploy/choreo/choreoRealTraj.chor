@@ -1,0 +1,78 @@
+{
+ "name":"choreoRealTraj",
+ "version":1,
+ "type":"Swerve",
+ "variables":{
+  "expressions":{},
+  "poses":{}
+ },
+ "config":{
+  "frontLeft":{
+   "x":{
+    "exp":"14.5 in",
+    "val":0.3683
+   },
+   "y":{
+    "exp":"14.5 in",
+    "val":0.3683
+   }
+  },
+  "backLeft":{
+   "x":{
+    "exp":"-14.5 in",
+    "val":-0.3683
+   },
+   "y":{
+    "exp":"-14.5 in",
+    "val":-0.3683
+   }
+  },
+  "mass":{
+   "exp":"110 lbs",
+   "val":49.895160700000005
+  },
+  "inertia":{
+   "exp":"7 kg m ^ 2",
+   "val":7.0
+  },
+  "gearing":{
+   "exp":"12.8",
+   "val":12.8
+  },
+  "radius":{
+   "exp":"2 in",
+   "val":0.0508
+  },
+  "vmax":{
+   "exp":"5676 RPM",
+   "val":594.3893300591889
+  },
+  "tmax":{
+   "exp":"3.75 N * m",
+   "val":3.75
+  },
+  "cof":{
+   "exp":"1.2",
+   "val":1.2
+  },
+  "bumper":{
+   "front":{
+    "exp":"17.5 in",
+    "val":0.4445
+   },
+   "side":{
+    "exp":"17.5 in",
+    "val":0.4445
+   },
+   "back":{
+    "exp":"17.5 in",
+    "val":0.4445
+   }
+  },
+  "differentialTrackWidth":{
+   "exp":"22 in",
+   "val":0.5588
+  }
+ },
+ "generationFeatures":[]
+}
