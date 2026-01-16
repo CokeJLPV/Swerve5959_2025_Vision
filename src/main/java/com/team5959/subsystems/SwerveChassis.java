@@ -49,7 +49,9 @@ public class SwerveChassis extends SubsystemBase{
 
   Field2d field2d = new Field2d();  
 
-  public SwerveChassis() {
+  public SwerveChassis(Vision vision) {
+
+    this.vision = vision;
 
     headingPID.enableContinuousInput(-180.0, 180.0);
     headingPID.setTolerance(SwerveConstants.HOLDING_TOLLERANCE); // TUNEAR
@@ -93,7 +95,6 @@ public class SwerveChassis extends SubsystemBase{
       new Pose2d(0, 0, getRotation2d())
     );  
 
-    vision = new Vision();
 
     // Load the RobotConfig from the GUI settings. You should probably
     // store this in your Constants file
@@ -354,7 +355,6 @@ public void publishTrajectory(String name, Trajectory trajectory) {
    
     //SmartDashboard.putNumber("NAVX", -navx.getAngle());
     //SmartDashboard.putNumber("NAVXYAW", navx.getYaw());
-    
     //SmartDashboard.putNumber("rot 2d", ((getRotation2d().getDegrees() % 360) + 360) % 360);
 
     SmartDashboard.putNumber("Distancia FL", swerveModules [0].getPosition().distanceMeters);
@@ -385,9 +385,9 @@ num = Math.copySign(num * num, num);
 
 return num;
 }
-/**
+/*
  * Este método corre automáticamente solo cuando estás simulando el robot.
-
+*/
 @Override
 public void simulationPeriodic() {
     // Le decimos a PhotonVision dónde está el robot simulado en el campo.
@@ -397,5 +397,5 @@ public void simulationPeriodic() {
     // Por ahora, usar la odometría es suficiente para pruebas básicas.
     vision.simulationPeriodic(poseEstimator.getEstimatedPosition());
 }
-*/
+
 }

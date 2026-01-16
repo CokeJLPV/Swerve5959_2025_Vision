@@ -22,6 +22,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 //  11 . frontRightAbsEncoder
 //  12 . rearRightAbsEncoder
 //  13 . rearLeftAbsEncoder
+//  15 . MitoCANdria
 
 public class Constants {
     public static class ControllerConstants {

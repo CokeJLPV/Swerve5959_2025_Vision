@@ -49,10 +49,10 @@ public class Vision {
     private static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
     // Límites del campo (Sanity Check) - Margen de 0.5m fuera del campo permitido
-    private static final double FIELD_LENGTH_METERS = 16.54;
-    private static final double FIELD_WIDTH_METERS = 8.21;
+    private static final double FIELD_LENGTH_METERS = 17.54;
+    private static final double FIELD_WIDTH_METERS = 9.21;
     // Límite de altura: El robot no debería reportar estar volando a más de 50cm
-    private static final double MAX_HEIGHT_ERROR_METERS = 0.5;
+    private static final double MAX_HEIGHT_ERROR_METERS = 50;
 
     private static final Transform3d LEFT_FRONT_ROBOT_TO_CAM = new Transform3d(
             new Translation3d(0.3, 0.3, 0.2),
@@ -63,17 +63,17 @@ public class Vision {
             new Rotation3d(0, Units.degreesToRadians(22), Units.degreesToRadians(-45)));
 
     public Vision() {
-        leftFrontCamera = new PhotonCamera("leftFrontCamera");
-        rightFrontCamera = new PhotonCamera("rightFrontCamera");
+        leftFrontCamera = new PhotonCamera("LeftAprilTagCamera");
+        rightFrontCamera = new PhotonCamera("RightAprilTagCamera");
         objectCamera = new PhotonCamera("cameraObjects");
 
         try {
-            // Usamos 2024 Crescendo ya que tu librería aún no tiene 2025
-            aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
+            // Usamos 2026 REBUILT
+            aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
         } catch (Exception e) {
             e.printStackTrace();
             // Inicializar un layout vacío para evitar NullPointerException si falla la carga
-            aprilTagFieldLayout = new AprilTagFieldLayout(new ArrayList<>(), 16.54, 8.21);
+            aprilTagFieldLayout = new AprilTagFieldLayout(new ArrayList<>(), FIELD_LENGTH_METERS, FIELD_WIDTH_METERS);
         }
 
         // Inicializar Estimador Izquierdo
@@ -233,4 +233,12 @@ public class Vision {
             visionSim.update(robotSimPose);
         }
     }
+
+    public PhotonPipelineResult getLeftCameraResult() {
+    return leftFrontCamera.getLatestResult();
+}
+
+public PhotonPipelineResult getRightCameraResult() {
+    return rightFrontCamera.getLatestResult();
+}
 }
