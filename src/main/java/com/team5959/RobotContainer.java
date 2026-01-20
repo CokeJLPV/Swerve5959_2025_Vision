@@ -39,13 +39,13 @@ public class RobotContainer {
   // Creacion de objetos de SUBSISTEMAS 
     private final Vision vision = new Vision();
   private final SwerveChassis swerveChassis;
-  private final intakeCoralSubsystem intakeCoralSubsystem = new intakeCoralSubsystem();
+  /*private final intakeCoralSubsystem intakeCoralSubsystem = new intakeCoralSubsystem();
   private final armIntakeAlgaeSubsystem armIntakeAlgaeSubsystem = new armIntakeAlgaeSubsystem();
   private final elevatorSubsystem elevatorSubsystem = new elevatorSubsystem();
-  private final miniArmSubsystem miniArmSubsystem = new miniArmSubsystem();
+  private final miniArmSubsystem miniArmSubsystem = new miniArmSubsystem();*/
   private final VisionSubsystem VisionSubsystem = new VisionSubsystem(vision);
 
-  //COMMANDS without files
+  /*COMMANDS without files
   //Coral Intake Commands
   private Command runInCoralIntakeCommand(){
     return armIntakeAlgaeSubsystem.startEnd(() -> intakeCoralSubsystem.runInCoralIntake(), intakeCoralSubsystem::stopCoralIntake);
@@ -112,12 +112,12 @@ public class RobotContainer {
 
   private Command waitToCoral(){
     return intakeCoralSubsystem.run(intakeCoralSubsystem::runInCoralIntake).until(elevatorSubsystem::canRangeDetectsObject).andThen(runInCoralIntakeCommand().withTimeout(0.8));
-  }
+  }*/
 
   // Creacion de objetos de CONTROLES
   private final PS4Controller control = new PS4Controller(ControllerConstants.kDriverControllerPort);
   private final CommandPS4Controller CommandPS4Controller = new CommandPS4Controller(ControllerConstants.kDriverControllerPort);
-  private final CommandGenericHID CommandGenericController = new CommandGenericHID(ControllerConstants.kOperatorControllerPort);
+  //private final CommandGenericHID CommandGenericController = new CommandGenericHID(ControllerConstants.kOperatorControllerPort);
 
 
   // Creacion de objetos de BOTONES para asignar nombres claros 
@@ -129,14 +129,14 @@ public class RobotContainer {
   
    
   public RobotContainer() {
-
+    /* 
     //REGISTER NAME AUTONOMOUS COMMANDS
     NamedCommands.registerCommand("outCoral", runOutCoralIntakeCommand().withTimeout(2));
     NamedCommands.registerCommand("algaeDown", getInOrOutPositionCommand());
     NamedCommands.registerCommand("getAlgae", getRunInAlgaeCommand().withTimeout(2));
     NamedCommands.registerCommand("algaeUp", getInOrOutPositionCommand());
     NamedCommands.registerCommand("score",runInCoralIntakeCommand().withTimeout(1.5));
-    NamedCommands.registerCommand("waitToCoral", waitToCoral());
+    NamedCommands.registerCommand("waitToCoral", waitToCoral());*/
     swerveChassis = new SwerveChassis(vision);
     
     autoCommandChooser = AutoBuilder.buildAutoChooser();
@@ -169,10 +169,11 @@ public class RobotContainer {
         () -> control.getLeftX(), 
         () -> control.getRightX(),
         true));
-    intakeCoralSubsystem.setDefaultCommand(stopCoralIntakeCommand());
+    /*intakeCoralSubsystem.setDefaultCommand(stopCoralIntakeCommand());
     armIntakeAlgaeSubsystem.setDefaultCommand(getHoldAlgaeArmPositionCommand());
     elevatorSubsystem.setDefaultCommand(getHoldElevatorPositionCommand());
     miniArmSubsystem.setDefaultCommand(getHoldMiniArmPositionCommand());
+    */
 
     //Comandos de ejemplo para usar con PathPlanner
     NamedCommands.registerCommand("RunIntakeCmd", Commands.none());
@@ -180,6 +181,8 @@ public class RobotContainer {
    
        // Configure the trigger bindings method.
     configureBindings();
+
+    SmartDashboard.putData("VisionSubsystem",VisionSubsystem);
   }
 
   // Configurar los enlaces de botones para los comandos usando lambdas o referencias de método
@@ -200,7 +203,7 @@ public class RobotContainer {
   
     lockPositionButton.whileTrue(new SwerveDriveXLockCmd(swerveChassis));
     
-    CommandPS4Controller.R2().whileTrue(getRunInAlgaeCommand());
+    /*CommandPS4Controller.R2().whileTrue(getRunInAlgaeCommand());
     CommandPS4Controller.L2().whileTrue(getRunOutAlgaeCommand());
 
     CommandPS4Controller.triangle().onTrue(Commands.sequence(miniArmSubsystem.runOnce(miniArmSubsystem::downOrStartingPositionSwitch), getMiniArmPIDMovement())); //Triangle
@@ -223,6 +226,7 @@ public class RobotContainer {
     CommandGenericController.button(4).onTrue(getElevatorMoveCommand(elevatorSubsystem::moveToL2Position)); //Y
     CommandGenericController.button(2).onTrue(getElevatorMoveCommand(elevatorSubsystem::moveToL3Position)); //B
     CommandGenericController.button(1).onTrue(getElevatorMoveCommand(elevatorSubsystem::moveToStartingPosition)); //A
+    */
 
   
   }

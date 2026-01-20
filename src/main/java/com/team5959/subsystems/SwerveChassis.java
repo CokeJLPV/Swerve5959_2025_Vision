@@ -13,6 +13,7 @@ import com.studica.frc.AHRS;
 import com.team5959.Constants.SwerveConstants;
 import com.team5959.Vision;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -86,13 +87,16 @@ public class SwerveChassis extends SubsystemBase{
       getModulePositions(),
       new Pose2d(0, 0, getRotation2d())
     );
+ 
 
     //instantiate pose estimator
     poseEstimator = new SwerveDrivePoseEstimator(
       SwerveConstants.DRIVE_KINEMATICS, 
       getRotation2d(),
       getModulePositions(),
-      new Pose2d(0, 0, getRotation2d())
+      new Pose2d(0, 0, getRotation2d()),
+      VecBuilder.fill(0.1, 0.1, 0.1),
+      VecBuilder.fill(0.8, 0.8, 0.8)
     );  
 
 
@@ -331,11 +335,11 @@ public void publishTrajectory(String name, Trajectory trajectory) {
 
     if (Math.abs(getRobotRelativeSpeeds().omegaRadiansPerSecond) > 3.5) {
       // Actualizamos solo el field2d y salimos
-      field2d.setRobotPose(odometer.getPoseMeters());
+      field2d.setRobotPose(poseEstimator.getEstimatedPosition());
       return; 
     }
 
-    List<EstimatedRobotPose> visionEstimates = vision.getEstimatedGlobalPoses(poseEstimator.getEstimatedPosition());
+    List<EstimatedRobotPose> visionEstimates = vision.getLatestEstimates(poseEstimator.getEstimatedPosition());
 
     for (EstimatedRobotPose estimate : visionEstimates){
       //Calculamos la confianza dinámica antes de agregar la medición
@@ -344,10 +348,10 @@ public void publishTrajectory(String name, Trajectory trajectory) {
       poseEstimator.addVisionMeasurement(estimate.estimatedPose.toPose2d(), estimate.timestampSeconds, stdDevs);
     }
 
-    field2d.setRobotPose(odometer.getPoseMeters());
+    field2d.setRobotPose(poseEstimator.getEstimatedPosition());
 
     SmartDashboard.putData("NAVX2D", navx);
-    SmartDashboard.putString("POSE INFO", odometer.getPoseMeters().toString());
+    SmartDashboard.putString("POSE INFO", poseEstimator.getEstimatedPosition().toString());
     
     for (SwerveModule swerveMod : swerveModules) {
       swerveMod.print();
@@ -387,7 +391,7 @@ return num;
 }
 /*
  * Este método corre automáticamente solo cuando estás simulando el robot.
-*/
+
 @Override
 public void simulationPeriodic() {
     // Le decimos a PhotonVision dónde está el robot simulado en el campo.
@@ -397,5 +401,6 @@ public void simulationPeriodic() {
     // Por ahora, usar la odometría es suficiente para pruebas básicas.
     vision.simulationPeriodic(poseEstimator.getEstimatedPosition());
 }
+*/
 
 }
