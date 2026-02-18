@@ -1,3 +1,4 @@
+/*
 package com.team5959.subsystems;
 
 import org.photonvision.targeting.PhotonPipelineResult;
@@ -8,7 +9,7 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class VisionSubsystem extends SubsystemBase {
-  /** Creates a new VisionSubsystem. */
+  /** Creates a new VisionSubsystem.
   private final Vision vision;
   public VisionSubsystem(Vision vision) {
     this.vision = vision;
@@ -39,7 +40,7 @@ public class VisionSubsystem extends SubsystemBase {
     /* CORREGIDO: Usamos el método auxiliar getLatency para evitar el error de compilación
     builder.addDoubleProperty("Left/LatencyMs", 
         () -> getLatency(vision.getLeftCameraResult()), null);
-    */
+    
 
     builder.addDoubleProperty("Left/DistToTag", 
         () -> getDistanceToTag(vision.getLeftCameraResult()), null);
@@ -61,7 +62,7 @@ public class VisionSubsystem extends SubsystemBase {
     /*  CORREGIDO: Usamos el método auxiliar getLatency
     builder.addDoubleProperty("Right/LatencyMs", 
         () -> getLatency(vision.getRightCameraResult()), null);
-    */
+    
 
     builder.addDoubleProperty("Right/DistToTag", 
         () -> getDistanceToTag(vision.getRightCameraResult()), null);
@@ -85,7 +86,7 @@ public class VisionSubsystem extends SubsystemBase {
   /* Método auxiliar para evitar el error de compilación con DoubleSupplier
   private double getLatency(PhotonPipelineResult result) {
       return result.getLatencyMillis();
-  }*/
+  }
 
   // Calcula la distancia lineal al tag (hipotenusa 3D)
   private double getDistanceToTag(PhotonPipelineResult result) {
@@ -100,3 +101,4 @@ public class VisionSubsystem extends SubsystemBase {
       return 0;
   }
 }
+*/

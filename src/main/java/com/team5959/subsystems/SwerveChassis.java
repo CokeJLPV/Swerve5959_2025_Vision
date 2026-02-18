@@ -1,19 +1,14 @@
 package com.team5959.subsystems;
 
-import java.util.List;
-
-//Vision
-import org.photonvision.EstimatedRobotPose;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.studica.frc.AHRS;
 import com.team5959.Constants.SwerveConstants;
-import com.team5959.Vision;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -23,6 +18,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -46,13 +43,9 @@ public class SwerveChassis extends SubsystemBase{
   private SwerveDrivePoseEstimator poseEstimator;
   private AHRS navx; 
 
-  private Vision vision;
-
   Field2d field2d = new Field2d();  
 
-  public SwerveChassis(Vision vision) {
-
-    this.vision = vision;
+  public SwerveChassis() {
 
     headingPID.enableContinuousInput(-180.0, 180.0);
     headingPID.setTolerance(SwerveConstants.HOLDING_TOLLERANCE); // TUNEAR
@@ -95,8 +88,8 @@ public class SwerveChassis extends SubsystemBase{
       getRotation2d(),
       getModulePositions(),
       new Pose2d(0, 0, getRotation2d()),
-      VecBuilder.fill(0.1, 0.1, 0.1),
-      VecBuilder.fill(0.8, 0.8, 0.8)
+      VecBuilder.fill(0.5, 0.5, 0.5),
+      VecBuilder.fill(0.1, 0.1, 0.1)
     );  
 
 
@@ -128,6 +121,14 @@ public class SwerveChassis extends SubsystemBase{
               return false;
             },
             this);
+  }
+
+  public void addVisionMeasurement(Pose2d visionMeasurement, double timestampSeconds, Matrix<N3, N1> stdDevs) {
+    poseEstimator.addVisionMeasurement(visionMeasurement, timestampSeconds, stdDevs);
+  }
+
+  public Rotation2d getHeading() {
+    return getPose2d().getRotation();
   }
 
   public void holdCurrentHeading() {
@@ -339,14 +340,6 @@ public void publishTrajectory(String name, Trajectory trajectory) {
       return; 
     }
 
-    List<EstimatedRobotPose> visionEstimates = vision.getLatestEstimates(poseEstimator.getEstimatedPosition());
-
-    for (EstimatedRobotPose estimate : visionEstimates){
-      //Calculamos la confianza dinámica antes de agregar la medición
-      var stdDevs = vision.getEstimationStdDevs(estimate);
-
-      poseEstimator.addVisionMeasurement(estimate.estimatedPose.toPose2d(), estimate.timestampSeconds, stdDevs);
-    }
 
     field2d.setRobotPose(poseEstimator.getEstimatedPosition());
 

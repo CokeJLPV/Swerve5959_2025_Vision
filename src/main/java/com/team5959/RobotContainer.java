@@ -11,7 +11,6 @@ import com.team5959.Constants.ControllerConstants;
 import com.team5959.commands.SwerveDriveJoystickCmd;
 import com.team5959.commands.SwerveDriveXLockCmd;
 import com.team5959.subsystems.SwerveChassis;
-import com.team5959.subsystems.VisionSubsystem;
 import com.team5959.subsystems.armIntakeAlgaeSubsystem;
 import com.team5959.subsystems.elevatorSubsystem;
 import com.team5959.subsystems.intakeCoralSubsystem;
@@ -37,13 +36,12 @@ public class RobotContainer {
   public static SendableChooser<Command> autoCommandChooser; //Create sendable chooser for Autos
 
   // Creacion de objetos de SUBSISTEMAS 
-    private final Vision vision = new Vision();
+    private final Vision vision;
   private final SwerveChassis swerveChassis;
   /*private final intakeCoralSubsystem intakeCoralSubsystem = new intakeCoralSubsystem();
   private final armIntakeAlgaeSubsystem armIntakeAlgaeSubsystem = new armIntakeAlgaeSubsystem();
   private final elevatorSubsystem elevatorSubsystem = new elevatorSubsystem();
   private final miniArmSubsystem miniArmSubsystem = new miniArmSubsystem();*/
-  private final VisionSubsystem VisionSubsystem = new VisionSubsystem(vision);
 
   /*COMMANDS without files
   //Coral Intake Commands
@@ -137,7 +135,8 @@ public class RobotContainer {
     NamedCommands.registerCommand("algaeUp", getInOrOutPositionCommand());
     NamedCommands.registerCommand("score",runInCoralIntakeCommand().withTimeout(1.5));
     NamedCommands.registerCommand("waitToCoral", waitToCoral());*/
-    swerveChassis = new SwerveChassis(vision);
+    swerveChassis = new SwerveChassis();
+    vision = new Vision(swerveChassis::addVisionMeasurement);
     
     autoCommandChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Command Chooser", autoCommandChooser);
@@ -182,7 +181,7 @@ public class RobotContainer {
        // Configure the trigger bindings method.
     configureBindings();
 
-    SmartDashboard.putData("VisionSubsystem",VisionSubsystem);
+    //SmartDashboard.putData("VisionSubsystem",VisionSubsystem);
   }
 
   // Configurar los enlaces de botones para los comandos usando lambdas o referencias de método
@@ -232,6 +231,7 @@ public class RobotContainer {
   }
   
   public void periodic(){
+    vision.periodic();
         
   }
   
